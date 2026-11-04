@@ -4,15 +4,19 @@
         Title="Codex Splash"
         WindowStyle="None"
         ResizeMode="NoResize"
-        WindowStartupLocation="CenterScreen"
-        WindowState="Maximized"
+        WindowStartupLocation="Manual"
         ShowInTaskbar="False"
         Topmost="True"
         Background="Black"
-        Opacity="0"
         Cursor="None"
         Focusable="True">
 
+    <!--
+        注意：此窗口必须保持完全不透明。
+        WPF 一旦进入分层窗口模式（Window.Opacity < 1 或 AllowsTransparency=True），
+        MediaElement 的视频画面就不会被合成进来，表现为「时间轴在走但画面卡住」。
+        所以转场淡入淡出全部由上面的 Curtain 遮罩层承担。
+    -->
     <Grid Background="Black">
         <MediaElement x:Name="Player"
                       Stretch="Uniform"
@@ -22,6 +26,8 @@
                       MediaOpened="OnMediaOpened"
                       MediaEnded="OnMediaEnded"
                       MediaFailed="OnMediaFailed" />
+
+        <Rectangle x:Name="Curtain" Fill="Black" Opacity="1" />
 
         <TextBlock x:Name="ErrText"
                    HorizontalAlignment="Center"

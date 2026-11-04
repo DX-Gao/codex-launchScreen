@@ -27,10 +27,20 @@ namespace CodexSplash
         private bool _fadedIn;
 
         private DispatcherTimer _tick;
+        private DispatcherTimer _revealTimer;
 
         public MainWindow()
         {
             InitializeComponent();
+
+            // 不用 WindowState=Maximized：无边框窗口最大化时会把不可见的边框算进去，
+            // 窗口被撑得比屏幕宽，居中播放的视频就会整体偏移。
+            // 直接按主屏尺寸铺满，位置和大小都是精确的。
+            Left = 0;
+            Top = 0;
+            Width = SystemParameters.PrimaryScreenWidth;
+            Height = SystemParameters.PrimaryScreenHeight;
+
             Loaded += OnLoaded;
             KeyDown += OnKeyDown;
             // 启动后 900ms 内的点击一律忽略：双击图标时第二下很容易落到刚弹出的窗口上
@@ -108,7 +118,15 @@ namespace CodexSplash
             Player.Source = new Uri(_mediaPath, UriKind.Absolute);
             Player.Play();
 
-            FadeIn();
+            // 揭幕交给 OnMediaOpened；万一它没触发，2 秒后兜底揭幕，避免一直黑屏
+            _revealTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(2) };
+            _revealTimer.Tick += (s, args) =>
+            {
+                _revealTimer.Stop();
+                Log("reveal fallback (media opened 未回调)");
+                FadeIn();
+            };
+            _revealTimer.Start();
 
             // 动画先起来，250ms 后拉起 Codex，两者并行
             var launchTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(250) };
@@ -254,17 +272,22 @@ namespace CodexSplash
         }
 
         /* ----------------------------- 转场 ----------------------------- */
+        // 注意：不能对 Window.Opacity 做动画。WPF 在 Opacity<1 时会切到分层窗口，
+        // MediaElement 的画面就不参与合成了，表现为「时间轴在走、画面却是黑的」。
+        // 所以这里的淡入淡出只操作窗口内那层黑色遮罩 Curtain。
 
         private void FadeIn()
         {
             if (_fadedIn) return;
             _fadedIn = true;
 
-            var anim = new DoubleAnimation(0, 1, TimeSpan.FromMilliseconds(260))
+            if (_revealTimer != null) _revealTimer.Stop();
+
+            var anim = new DoubleAnimation(1, 0, TimeSpan.FromMilliseconds(420))
             {
                 EasingFunction = new QuadraticEase { EasingMode = EasingMode.EaseOut }
             };
-            BeginAnimation(OpacityProperty, anim);
+            Curtain.BeginAnimation(OpacityProperty, anim);
         }
 
         private void CloseWithFade(int ms)
@@ -275,13 +298,14 @@ namespace CodexSplash
             Log("fade out " + ms + "ms");
 
             if (_tick != null) _tick.Stop();
+            if (_revealTimer != null) _revealTimer.Stop();
 
-            var anim = new DoubleAnimation(Opacity, 0, TimeSpan.FromMilliseconds(ms <= 0 ? 400 : ms))
+            var anim = new DoubleAnimation(Curtain.Opacity, 1, TimeSpan.FromMilliseconds(ms <= 0 ? 400 : ms))
             {
                 EasingFunction = new QuadraticEase { EasingMode = EasingMode.EaseInOut }
             };
             anim.Completed += (s, e) => FinishNow();
-            BeginAnimation(OpacityProperty, anim);
+            Curtain.BeginAnimation(OpacityProperty, anim);
         }
 
         private void FinishNow()
