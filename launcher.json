@@ -1,7 +1,7 @@
 {
   "displayName": "Dragon Splash Boot",
   "port": 7788,
-  "current": "a",
+  "current": "b",
   "volume": 0.85,
   "skipWithEsc": true,
   "holdLastFrameMs": 350,
@@ -28,7 +28,7 @@
     {
       "id": "b",
       "name": "B · 光门逆光登场",
-      "desc": "光门炸开 → 逆光定形 → 待机循环",
+      "desc": "16:9 原生 2K 渲染：光门炸开 → 逆光定形 → 待机循环",
       "file": "media/b-光门登场.mp4",
       "duration": 10.31,
       "accent": "#6ee7ff"
