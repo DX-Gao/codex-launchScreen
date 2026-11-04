@@ -23,3 +23,8 @@ desktop.ini
 
 # 视频原始素材（3:2 未满屏版），仅本地保留
 media/_source/
+
+# 本地调试截图
+_frame_*.png
+_s[0-9]*.png
+_t[0-9]*.png
