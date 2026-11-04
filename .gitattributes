@@ -1,0 +1,13 @@
+# 默认按文本处理，自动规范化换行
+* text=auto
+
+# 批处理与 VBS 采用 GBK 编码，必须原样保留，不能被换行/编码转换
+*.bat -text
+*.vbs -text
+
+# 脚本统一 CRLF（Windows 上直接可跑）
+*.ps1 text eol=crlf
+
+# 二进制资源
+*.ico binary
+*.mp4 binary

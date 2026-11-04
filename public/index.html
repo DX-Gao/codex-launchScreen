@@ -1,0 +1,485 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Dragon Splash Boot · 启动序列</title>
+<style>
+  :root{
+    --bg:#05070d;
+    --ink:#eaf5fb;
+    --muted:rgba(204,226,240,.62);
+    --dim:rgba(204,226,240,.36);
+    --line:rgba(140,200,230,.13);
+    --line-2:rgba(140,200,230,.26);
+    --cyan:#6ee7ff;
+    --gold:#e9c98d;
+    --panel:rgba(12,19,30,.72);
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0}
+  body{
+    min-height:100vh;
+    color:var(--ink);
+    font-family:"PingFang SC","Microsoft YaHei","Segoe UI",system-ui,sans-serif;
+    -webkit-font-smoothing:antialiased;
+    background:
+      radial-gradient(1100px 620px at 82% -14%, rgba(56,140,190,.20), transparent 62%),
+      radial-gradient(820px 520px at 4% 112%, rgba(88,66,158,.14), transparent 62%),
+      var(--bg);
+  }
+  body::before{
+    content:"";position:fixed;inset:0;pointer-events:none;z-index:0;
+    background-image:
+      linear-gradient(rgba(120,190,220,.045) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(120,190,220,.045) 1px, transparent 1px);
+    background-size:64px 64px;
+    mask-image:radial-gradient(circle at 50% 30%, #000 0%, transparent 78%);
+  }
+  .wrap{position:relative;z-index:1;max-width:1220px;margin:0 auto;padding:30px 30px 54px}
+
+  /* ---------- 顶栏 ---------- */
+  header{display:flex;align-items:center;justify-content:space-between;gap:18px;flex-wrap:wrap;
+         padding-bottom:20px;border-bottom:1px solid var(--line)}
+  .brand{display:flex;align-items:center;gap:14px}
+  .mark{
+    width:38px;height:38px;border-radius:11px;
+    border:1px solid var(--line-2);display:grid;place-items:center;
+    font-family:ui-monospace,Consolas,monospace;color:var(--cyan);font-size:16px;
+    background:rgba(110,231,255,.05);
+    box-shadow:0 0 26px rgba(110,231,255,.14) inset;
+  }
+  h1{margin:0;font-size:16px;font-weight:500;letter-spacing:.10em}
+  .sub{margin-top:5px;font-size:10.5px;letter-spacing:.34em;text-transform:uppercase;color:var(--dim)}
+  .head-right{display:flex;align-items:center;gap:14px;font-size:11px;letter-spacing:.14em;color:var(--muted)}
+  .dot{width:6px;height:6px;border-radius:50%;background:var(--cyan);box-shadow:0 0 9px var(--cyan);
+       display:inline-block;margin-right:7px;vertical-align:1px}
+
+  /* ---------- 标题条 ---------- */
+  .strip{display:flex;align-items:center;gap:14px;margin:26px 0 14px}
+  .strip span{font-size:10.5px;letter-spacing:.32em;text-transform:uppercase;color:var(--dim)}
+  .strip i{flex:1;height:1px;background:var(--line)}
+
+  /* ---------- 主角区 ---------- */
+  .hero{display:grid;grid-template-columns:1.62fr 1fr;gap:22px;align-items:stretch}
+  @media (max-width:900px){.hero{grid-template-columns:1fr}}
+
+  .screen{
+    position:relative;border-radius:16px;overflow:hidden;
+    border:1px solid var(--line-2);
+    background:#000;
+    box-shadow:0 26px 60px rgba(0,0,0,.55), 0 0 0 1px rgba(110,231,255,.06);
+    aspect-ratio:16/10;
+  }
+  .screen video{width:100%;height:100%;object-fit:contain;display:block;background:#000}
+  .screen::after{
+    content:"";position:absolute;inset:0;pointer-events:none;
+    box-shadow:inset 0 0 90px rgba(0,0,0,.55);
+    border-radius:16px;
+  }
+  .corner{position:absolute;width:14px;height:14px;border:1px solid rgba(110,231,255,.5);pointer-events:none}
+  .corner.tl{top:10px;left:10px;border-right:0;border-bottom:0;border-top-left-radius:4px}
+  .corner.tr{top:10px;right:10px;border-left:0;border-bottom:0;border-top-right-radius:4px}
+  .corner.bl{bottom:10px;left:10px;border-right:0;border-top:0;border-bottom-left-radius:4px}
+  .corner.br{bottom:10px;right:10px;border-left:0;border-top:0;border-bottom-right-radius:4px}
+
+  .info{display:flex;flex-direction:column;justify-content:center;padding:6px 2px}
+  .eyebrow{font-size:10px;letter-spacing:.34em;color:var(--cyan);opacity:.85;text-transform:uppercase}
+  .title{font-size:clamp(22px,2.4vw,30px);font-weight:500;letter-spacing:.02em;margin:12px 0 0;line-height:1.3}
+  .desc{font-size:13px;color:var(--muted);line-height:1.85;margin-top:10px;max-width:34ch}
+  .chips{display:flex;gap:8px;flex-wrap:wrap;margin-top:18px}
+  .chip{
+    font-size:10.5px;letter-spacing:.1em;color:var(--muted);
+    padding:5px 10px;border-radius:6px;
+    border:1px solid var(--line);background:rgba(255,255,255,.03);
+    font-family:ui-monospace,Consolas,monospace;
+  }
+  .btn-row{display:flex;gap:10px;margin-top:24px;flex-wrap:wrap}
+  button{
+    font-family:inherit;font-size:12.5px;letter-spacing:.08em;
+    padding:10px 18px;border-radius:9px;cursor:pointer;
+    border:1px solid var(--line-2);background:rgba(255,255,255,.04);color:var(--ink);
+    transition:background .18s,border-color .18s,color .18s,transform .12s;
+  }
+  button:hover{background:rgba(110,231,255,.13);border-color:rgba(110,231,255,.6);color:#fff}
+  button:active{transform:translateY(1px)}
+  button.primary{
+    background:linear-gradient(180deg, rgba(110,231,255,.22), rgba(110,231,255,.10));
+    border-color:rgba(110,231,255,.6);color:#e6fdff;
+    box-shadow:0 0 24px rgba(110,231,255,.16);
+  }
+  button.primary:hover{background:linear-gradient(180deg, rgba(110,231,255,.32), rgba(110,231,255,.16))}
+  button:disabled{opacity:.42;cursor:default;transform:none}
+
+  /* ---------- 候选 ---------- */
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(238px,1fr));gap:14px}
+  .card{
+    position:relative;border-radius:12px;overflow:hidden;cursor:pointer;
+    border:1px solid var(--line);
+    background:linear-gradient(180deg, rgba(17,26,40,.85), rgba(10,16,26,.85));
+    transition:border-color .2s, transform .2s, box-shadow .2s;
+  }
+  .card:hover{border-color:var(--line-2);transform:translateY(-3px);box-shadow:0 16px 34px rgba(0,0,0,.5)}
+  .card.on{border-color:rgba(110,231,255,.55);box-shadow:0 0 0 1px rgba(110,231,255,.28)}
+  .card .thumb{position:relative;aspect-ratio:16/9;background:#04070c;overflow:hidden}
+  .card .thumb video{width:100%;height:100%;object-fit:cover;display:block;opacity:.9;transition:opacity .2s}
+  .card:hover .thumb video{opacity:1}
+  .card .thumb::after{
+    content:"";position:absolute;inset:0;
+    background:linear-gradient(180deg,transparent 50%, rgba(6,10,18,.92));
+  }
+  .card .label{position:absolute;left:11px;right:11px;bottom:9px;z-index:2;display:flex;align-items:center;gap:8px}
+  .card .label .n{font-size:12.5px;letter-spacing:.02em}
+  .card .label .t{margin-left:auto;font-family:ui-monospace,Consolas,monospace;font-size:10.5px;color:var(--dim)}
+  .card .flag{
+    position:absolute;top:9px;left:9px;z-index:2;font-size:9.5px;letter-spacing:.16em;
+    padding:3px 7px;border-radius:5px;
+    background:rgba(6,12,20,.75);border:1px solid var(--line);color:var(--muted);
+  }
+  .card.on .flag{background:var(--cyan);color:#04141c;border-color:transparent;font-weight:600}
+
+  /* ---------- 设置 ---------- */
+  .settings{
+    margin-top:12px;border:1px solid var(--line);border-radius:14px;
+    background:var(--panel);backdrop-filter:blur(8px);
+    padding:6px 22px;
+  }
+  .row{display:flex;align-items:center;gap:16px;padding:15px 0;flex-wrap:wrap}
+  .row + .row{border-top:1px solid rgba(140,200,230,.07)}
+  .row .k{width:132px;flex:none;font-size:12.5px;color:var(--muted);letter-spacing:.04em}
+  .row .v{flex:1;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+
+  input[type=range]{width:200px;accent-color:#6ee7ff}
+  .num{font-family:ui-monospace,Consolas,monospace;font-size:11.5px;color:var(--cyan);min-width:38px}
+  input[type=text]{
+    flex:1;min-width:260px;
+    background:#04080f;border:1px solid var(--line);
+    color:var(--ink);font-family:inherit;font-size:12.5px;
+    padding:9px 12px;border-radius:8px;outline:none;transition:border-color .18s;
+  }
+  input[type=text]:focus{border-color:rgba(110,231,255,.5)}
+  .switch{display:flex;align-items:center;gap:9px;font-size:12.5px;color:var(--muted);cursor:pointer;user-select:none}
+  .switch input{width:15px;height:15px;accent-color:#6ee7ff;cursor:pointer}
+  .tip{font-size:11px;color:var(--dim);letter-spacing:.02em}
+
+  /* ---------- 页脚 ---------- */
+  footer{
+    margin-top:26px;padding-top:18px;border-top:1px solid var(--line);
+    font-size:11px;color:var(--dim);line-height:2;letter-spacing:.02em;
+  }
+  footer code{
+    color:var(--muted);background:rgba(255,255,255,.05);
+    padding:1px 6px;border-radius:4px;font-size:10.5px;
+  }
+
+  .toast{
+    position:fixed;left:50%;bottom:36px;transform:translate(-50%,18px);
+    background:rgba(7,14,23,.96);border:1px solid var(--line-2);
+    padding:12px 22px;border-radius:10px;font-size:12.5px;letter-spacing:.06em;
+    opacity:0;pointer-events:none;transition:opacity .24s, transform .24s;
+    z-index:99;backdrop-filter:blur(12px);
+    box-shadow:0 16px 40px rgba(0,0,0,.5);
+  }
+  .toast.show{opacity:1;transform:translate(-50%,0)}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div class="brand">
+      <div class="mark">&rsaquo;_</div>
+      <div>
+        <h1>Dragon Splash Boot</h1>
+        <div class="sub">Startup sequence</div>
+      </div>
+    </div>
+    <div class="head-right">
+      <span><span class="dot"></span><span id="status">就绪</span></span>
+    </div>
+  </header>
+
+  <div class="strip"><span>当前启动序列</span><i></i></div>
+  <div class="hero" id="hero"></div>
+
+  <div class="strip"><span>其他方案</span><i></i></div>
+  <div class="grid" id="grid"></div>
+
+  <div class="strip"><span>播放设置</span><i></i></div>
+  <div class="settings">
+    <div class="row">
+      <div class="k">音量</div>
+      <div class="v">
+        <input type="range" id="volume" min="0" max="1" step="0.05">
+        <span class="num" id="volText">85%</span>
+      </div>
+    </div>
+    <div class="row">
+      <div class="k">跳过</div>
+      <div class="v">
+        <label class="switch"><input type="checkbox" id="esc"> 允许按 ESC 或点击画面跳过</label>
+      </div>
+    </div>
+    <div class="row">
+      <div class="k">播完后启动</div>
+      <div class="v">
+        <label class="switch"><input type="checkbox" id="appOn"> 自动打开程序</label>
+        <span class="tip">商店应用填「应用 ID」，普通程序填 exe 路径，二选一，填了 ID 优先</span>
+      </div>
+    </div>
+    <div class="row">
+      <div class="k">商店应用 ID</div>
+      <div class="v">
+        <input type="text" id="appTarget" placeholder="OpenAI.Codex_2p2nqsd0c76g0!App">
+      </div>
+    </div>
+    <div class="row">
+      <div class="k">exe 路径</div>
+      <div class="v">
+        <input type="text" id="appPath" placeholder="C:\Program Files\SomeApp\SomeApp.exe">
+      </div>
+    </div>
+    <div class="row">
+      <div class="k"></div>
+      <div class="v">
+        <button class="primary" id="saveBtn">保存设置</button>
+        <button id="testBtn">试一下启动</button>
+        <span class="tip">应用 ID 查询：PowerShell 里执行 <code>Get-StartApps</code>，找名字对应的 AppID</span>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    <code>node server.js</code> 打开本面板 &nbsp;·&nbsp;
+    <code>node server.js --play</code> 直接播放当前序列 &nbsp;·&nbsp;
+    <code>node server.js --no-open</code> 只起服务<br>
+    新增动画：把 mp4 放进 <code>media/</code>，再到 <code>launcher.json</code> 的 animations 数组里加一条即可。
+  </footer>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+(function () {
+  var cfg = null;
+  var heroEl = document.getElementById('hero');
+  var gridEl = document.getElementById('grid');
+  var toastEl = document.getElementById('toast');
+  var toastTimer = null;
+
+  function toast(msg, ms) {
+    toastEl.textContent = msg;
+    toastEl.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () { toastEl.classList.remove('show'); }, ms || 2200);
+  }
+
+  function setStatus(t) { document.getElementById('status').textContent = t; }
+
+  function fmt(sec) {
+    var s = Math.round(sec || 0);
+    return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0');
+  }
+
+  function mediaUrl(file) {
+    return '/media/' + encodeURIComponent(String(file).replace(/^media\//, ''));
+  }
+
+  function current() {
+    return cfg.animations.filter(function (x) { return x.id === cfg.current; })[0] || cfg.animations[0];
+  }
+
+  function ratio(w, h) {
+    if (!w || !h) return '';
+    var g = (function gcd(a, b) { return b ? gcd(b, a % b) : a; })(w, h);
+    return (w / g) + ':' + (h / g);
+  }
+
+  function buildHero() {
+    var a = current();
+    heroEl.innerHTML = '';
+
+    var screen = document.createElement('div');
+    screen.className = 'screen';
+    var v = document.createElement('video');
+    v.src = mediaUrl(a.file);
+    v.muted = true; v.loop = true; v.autoplay = true; v.playsInline = true;
+    v.preload = 'auto';
+    v.play().catch(function () {});
+    screen.appendChild(v);
+    ['tl', 'tr', 'bl', 'br'].forEach(function (c) {
+      var el = document.createElement('div');
+      el.className = 'corner ' + c;
+      screen.appendChild(el);
+    });
+
+    var info = document.createElement('div');
+    info.className = 'info';
+    info.innerHTML =
+      '<div class="eyebrow">Now playing at launch</div>' +
+      '<h2 class="title">' + a.name + '</h2>' +
+      '<div class="desc">' + (a.desc || '') + '</div>' +
+      '<div class="chips" id="chips">' +
+        '<span class="chip">' + fmt(a.duration) + '</span>' +
+      '</div>' +
+      '<div class="btn-row">' +
+        '<button class="primary" id="playBtn">播放预览</button>' +
+        '<button id="setBtn">设为启动序列</button>' +
+      '</div>';
+
+    heroEl.appendChild(screen);
+    heroEl.appendChild(info);
+
+    v.addEventListener('loadedmetadata', function () {
+      var chips = info.querySelector('#chips');
+      chips.innerHTML =
+        '<span class="chip">' + fmt(a.duration) + '</span>' +
+        '<span class="chip">' + v.videoWidth + '×' + v.videoHeight + '</span>' +
+        '<span class="chip">' + ratio(v.videoWidth, v.videoHeight) + '</span>' +
+        '<span class="chip">H.264 / AAC</span>';
+    });
+
+    info.querySelector('#playBtn').addEventListener('click', function () { play(a.id); });
+    info.querySelector('#setBtn').addEventListener('click', function () {
+      if (a.id === cfg.current) return toast('已经是当前启动序列');
+      select(a.id);
+    });
+  }
+
+  function buildGrid() {
+    gridEl.innerHTML = '';
+    var others = cfg.animations.filter(function (x) { return x.id !== cfg.current; });
+    if (!others.length) {
+      gridEl.innerHTML = '<div class="tip">只有一条动画，添加更多后这里会列出候选。</div>';
+      return;
+    }
+
+    others.forEach(function (a) {
+      var card = document.createElement('div');
+      card.className = 'card';
+
+      var thumb = document.createElement('div');
+      thumb.className = 'thumb';
+      var v = document.createElement('video');
+      v.src = mediaUrl(a.file);
+      v.muted = true; v.loop = true; v.playsInline = true; v.preload = 'metadata';
+      thumb.appendChild(v);
+
+      var flag = document.createElement('div');
+      flag.className = 'flag';
+      flag.textContent = '候选';
+      thumb.appendChild(flag);
+
+      var label = document.createElement('div');
+      label.className = 'label';
+      label.innerHTML = '<span class="swatch" style="width:7px;height:7px;border-radius:2px;transform:rotate(45deg);background:' +
+        (a.accent || '#6ee7ff') + '"></span><span class="n">' + a.name + '</span><span class="t">' + fmt(a.duration) + '</span>';
+      thumb.appendChild(label);
+
+      card.appendChild(thumb);
+
+      card.addEventListener('mouseenter', function () { v.currentTime = 0; v.play().catch(function () {}); });
+      card.addEventListener('mouseleave', function () { v.pause(); v.currentTime = 0; });
+      card.addEventListener('click', function () { select(a.id); });
+
+      gridEl.appendChild(card);
+    });
+  }
+
+  function applySettings() {
+    document.getElementById('volume').value = cfg.volume;
+    document.getElementById('volText').textContent = Math.round(cfg.volume * 100) + '%';
+    document.getElementById('esc').checked = !!cfg.skipWithEsc;
+    var app = cfg.appLaunch || { enabled: false, mode: 'appsFolder', target: '', path: '' };
+    document.getElementById('appOn').checked = !!app.enabled;
+    document.getElementById('appTarget').value = app.target || '';
+    document.getElementById('appPath').value = app.path || '';
+  }
+
+  function render() {
+    buildHero();
+    buildGrid();
+    applySettings();
+  }
+
+  function select(id) {
+    setStatus('切换中…');
+    fetch('/api/select', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: id })
+    })
+      .then(function (r) { return r.json(); })
+      .then(function (res) {
+        if (!res.ok) { setStatus('就绪'); return toast('切换失败'); }
+        cfg.current = res.current;
+        render();
+        setStatus('就绪');
+        toast('已切换为：' + current().name);
+      })
+      .catch(function () { setStatus('就绪'); toast('切换失败'); });
+  }
+
+  function play(id) {
+    setStatus('正在拉起播放器…');
+    fetch('/api/play', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: id })
+    })
+      .then(function (r) { return r.json(); })
+      .then(function (res) {
+        setStatus('就绪');
+        toast(res.ok ? ('播放中：' + res.name + '（ESC 跳过）') : ('启动失败：' + (res.error || '未知原因')), 3200);
+      })
+      .catch(function () { setStatus('就绪'); toast('启动失败'); });
+  }
+
+  document.getElementById('volume').addEventListener('input', function (e) {
+    document.getElementById('volText').textContent = Math.round(e.target.value * 100) + '%';
+  });
+
+  document.getElementById('saveBtn').addEventListener('click', function () {
+    var target = document.getElementById('appTarget').value.trim();
+    var payload = {
+      volume: Number(document.getElementById('volume').value),
+      skipWithEsc: document.getElementById('esc').checked,
+      appLaunch: {
+        enabled: document.getElementById('appOn').checked,
+        mode: target ? 'appsFolder' : 'exe',
+        target: target,
+        path: document.getElementById('appPath').value.trim(),
+        args: []
+      }
+    };
+    fetch('/api/settings', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    })
+      .then(function (r) { return r.json(); })
+      .then(function (res) {
+        if (!res.ok) return toast('保存失败');
+        cfg = res.config;
+        applySettings();
+        toast('设置已保存');
+      })
+      .catch(function () { toast('保存失败'); });
+  });
+
+  document.getElementById('testBtn').addEventListener('click', function () {
+    toast('正在尝试启动…');
+    fetch('/api/open', { method: 'POST' })
+      .then(function (r) { return r.json(); })
+      .then(function () { toast('已发送启动请求，看下程序有没有起来', 3000); })
+      .catch(function () { toast('启动失败'); });
+  });
+
+  fetch('/api/config', { cache: 'no-store' })
+    .then(function (r) { return r.json(); })
+    .then(function (res) { cfg = res.config; render(); })
+    .catch(function () { toast('读取配置失败，服务是否已启动？'); });
+})();
+</script>
+</body>
+</html>

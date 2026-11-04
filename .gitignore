@@ -1,0 +1,23 @@
+# 构建产物
+dotnet/bin/
+dotnet/obj/
+app/
+app-standalone/
+out/
+dist/
+
+# 运行时生成
+logs/
+.browser-profile/
+*.log
+
+# IDE
+.vs/
+.vscode/
+*.user
+*.suo
+
+# 系统
+Thumbs.db
+desktop.ini
+.DS_Store

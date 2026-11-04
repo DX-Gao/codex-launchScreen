@@ -1,0 +1,153 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>Dragon Splash</title>
+<style>
+  html, body { margin: 0; height: 100%; background: #000; overflow: hidden; cursor: none; }
+  #v {
+    position: absolute; inset: 0;
+    width: 100%; height: 100%;
+    object-fit: contain;
+    background: #000;
+  }
+  /* 黑幕：进场时从黑淡入，退场时再淡回黑 */
+  #veil {
+    position: absolute; inset: 0; background: #000;
+    opacity: 1; pointer-events: none;
+  }
+  #hint {
+    position: absolute; right: 30px; bottom: 24px;
+    font: 400 12px/1 "Segoe UI", "Microsoft YaHei", sans-serif;
+    letter-spacing: .28em; color: rgba(200, 226, 240, .34);
+    opacity: 0; transition: opacity .4s;
+    pointer-events: none;
+  }
+  body:hover #hint { opacity: 1; }
+</style>
+</head>
+<body>
+<video id="v" playsinline autoplay preload="auto"></video>
+<div id="veil"></div>
+<div id="hint">ESC 跳过</div>
+
+<script>
+(function () {
+  var v = document.getElementById('v');
+  var veil = document.getElementById('veil');
+
+  var fadingOut = false;
+  var videoDoneSent = false;
+  var loopFrom = 0;
+  var fadeOutMs = 700;
+  var pollTimer = null;
+
+  function post(url, body) {
+    return fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body || {}),
+    }).catch(function () {});
+  }
+
+  /* 淡出到黑，然后通知服务端收窗口 */
+  function closeSplash(duration) {
+    if (fadingOut) return;
+    fadingOut = true;
+    if (pollTimer) { clearInterval(pollTimer); pollTimer = null; }
+
+    var ms = typeof duration === 'number' ? duration : fadeOutMs;
+    veil.style.transition = 'opacity ' + ms + 'ms ease';
+    veil.style.opacity = '1';
+
+    setTimeout(function () { post('/api/done'); }, ms + 80);
+  }
+
+  function markVideoDone() {
+    if (videoDoneSent) return;
+    videoDoneSent = true;
+    post('/api/video-done');
+  }
+
+  /* ---------- 拉配置、起播 ---------- */
+  var id = new URLSearchParams(location.search).get('id');
+
+  fetch('/api/config', { cache: 'no-store' })
+    .then(function (r) { return r.json(); })
+    .then(function (res) {
+      var cfg = res.config;
+      var list = cfg.animations || [];
+      var a = list.filter(function (x) { return x.id === id; })[0] ||
+              list.filter(function (x) { return x.id === cfg.current; })[0] ||
+              list[0];
+
+      if (!a) { closeSplash(200); return; }
+
+      fadeOutMs = cfg.fadeOutMs || 700;
+
+      // 视频结束后的循环起点：默认留最后 3.5 秒当待机循环
+      var total = a.duration || 12;
+      loopFrom = Math.max(0, total - 3.5);
+
+      var file = a.file.replace(/^media\//, '');
+      v.src = '/media/' + encodeURIComponent(file);
+      v.volume = typeof cfg.volume === 'number' ? cfg.volume : 1;
+
+      var p = v.play();
+      if (p && p.catch) {
+        p.catch(function () {
+          v.muted = true;
+          v.play().catch(function () {});
+        });
+      }
+
+      // 首帧可播后再把黑幕拉开，避免闪白
+      var opened = false;
+      function openVeil() {
+        if (opened) return;
+        opened = true;
+        veil.style.transition = 'opacity 520ms ease';
+        veil.style.opacity = '0';
+      }
+      v.addEventListener('canplay', openVeil, { once: true });
+      v.addEventListener('playing', openVeil, { once: true });
+      setTimeout(openVeil, 2500); // 兜底
+
+      startPolling();
+    })
+    .catch(function () { closeSplash(200); });
+
+  /* ---------- 视频播完：进入尾部循环，等应用就绪 ---------- */
+  v.addEventListener('ended', function () {
+    markVideoDone();
+    if (fadingOut) return;
+    try {
+      v.currentTime = loopFrom;
+      v.play().catch(function () {});
+    } catch (e) {}
+  });
+
+  /* ---------- 轮询服务端状态 ---------- */
+  function startPolling() {
+    if (pollTimer) clearInterval(pollTimer);
+    pollTimer = setInterval(function () {
+      fetch('/api/state', { cache: 'no-store' })
+        .then(function (r) { return r.json(); })
+        .then(function (res) {
+          var s = res.state || {};
+          if (s.videoDone) markVideoDone();
+          if (s.shouldClose) closeSplash(s.fadeOutMs || fadeOutMs);
+        })
+        .catch(function () {});
+    }, 350);
+  }
+
+  /* ---------- 跳过 ---------- */
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape') { e.preventDefault(); closeSplash(260); }
+  });
+  document.addEventListener('click', function () { closeSplash(260); });
+})();
+</script>
+</body>
+</html>
