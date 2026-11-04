@@ -21,3 +21,6 @@ logs/
 Thumbs.db
 desktop.ini
 .DS_Store
+
+# 视频原始素材（3:2 未满屏版），仅本地保留
+media/_source/
