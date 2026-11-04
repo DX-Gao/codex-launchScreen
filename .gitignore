@@ -1,7 +1,6 @@
-# 构建产物
+# 构建中间产物（app/ 是发布产物，故意提交进仓库，克隆后可直接双击运行）
 dotnet/bin/
 dotnet/obj/
-app/
 app-standalone/
 out/
 dist/

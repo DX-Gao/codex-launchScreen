@@ -1,7 +1,7 @@
 {
   "displayName": "Dragon Splash Boot",
   "port": 7788,
-  "current": "b",
+  "current": "c",
   "volume": 0.85,
   "skipWithEsc": true,
   "holdLastFrameMs": 350,
